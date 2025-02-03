@@ -7,6 +7,7 @@ import { app } from '../firebase/firebase';
 import Image from 'next/image';
 import { User } from 'firebase/auth';
 import Profile from '../components/Profile';
+import MyDoctor from '../components/MyDoctor';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -40,7 +41,7 @@ export default function Dashboard() {
       case 'Account':
         return <Profile user={user} />;
       case 'My Doctor':
-        return <div className="bg-white p-6 rounded-lg shadow-md">Doctor Info Coming Soon</div>;
+        return <MyDoctor />;
       case 'My Health':
         return <div className="bg-white p-6 rounded-lg shadow-md">Health Records Coming Soon</div>;
       case 'Book Appointment':
@@ -59,7 +60,7 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-3">
             <Image src="/logo.png" alt="Logo" width={40} height={40} />
-            <span className="text-xl font-bold text-gray-800">YOU COME FIRST</span>
+            <span className="text-xl font-bold text-gray-800">RogiSahyogi</span>
           </div>
 
           {/* Hamburger Menu for Mobile */}
