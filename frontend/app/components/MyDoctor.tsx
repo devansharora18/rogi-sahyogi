@@ -95,11 +95,16 @@ export default function MyDoctor() {
 
     const currentDate = new Date();
     let combinedFeeling = '';
+    let startDate = '';
+    let endDate = '';
 
     for (let i = 0; i < reportDay; i++) {
       const date = new Date(currentDate);
       date.setDate(date.getDate() - i);
       const formattedDate = date.toISOString().split('T')[0];
+
+      // Set startDate to the earliest date
+      if (i === reportDay - 1) startDate = formattedDate;
 
       const journalRef = doc(db, `user/${userId}/journals/${formattedDate}`);
 
@@ -120,6 +125,9 @@ export default function MyDoctor() {
     }
 
     if (combinedFeeling.trim()) {
+      // Set endDate to the current date
+      endDate = currentDate.toISOString().split('T')[0];
+
       try {
         const response = await fetch('/api/medreport', {
           method: 'POST',
@@ -129,9 +137,14 @@ export default function MyDoctor() {
 
         const data = await response.json();
         setReport(data.report);
+
+        // Upload the report to Firebase under user/{uid}/reports/{startdatetoenddate}
+        const reportRef = doc(db, `user/${userId}/reports/${startDate}to${endDate}`);
+        await setDoc(reportRef, { report: data.report, startDate, endDate });
+        console.log('Report saved to Firestore successfully!');
       } catch (error) {
-        console.error('Error calling API:', error);
-        alert('Failed to generate report.');
+        console.error('Error calling API or saving report:', error);
+        alert('Failed to generate or save report.');
       }
     } else {
       setReport('No journal entries found for the selected period.');
@@ -139,7 +152,6 @@ export default function MyDoctor() {
 
     setIsLoading(false); // Stop loading
   };
-
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">

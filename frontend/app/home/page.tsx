@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { User } from 'firebase/auth';
 import Profile from '../components/Profile';
 import MyDoctor from '../components/MyDoctor';
+import MyHealth from '../components/MyHealth';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -43,8 +44,8 @@ export default function Dashboard() {
       case 'My Doctor':
         return <MyDoctor />;
       case 'My Health':
-        return <div className="bg-white p-6 rounded-lg shadow-md">Health Records Coming Soon</div>;
-      case 'Book Appointment':
+		return <MyHealth />;
+	  case 'Book Appointment':
         return <div className="bg-white p-6 rounded-lg shadow-md">Booking System Coming Soon</div>;
       case 'My Appointments':
         return <div className="bg-white p-6 rounded-lg shadow-md">Appointments List Coming Soon</div>;
