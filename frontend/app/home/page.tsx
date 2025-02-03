@@ -6,13 +6,14 @@ import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import { app } from '../firebase/firebase';
 import Image from 'next/image';
 import { User } from 'firebase/auth';
+import Profile from '../components/Profile';
 
 export default function Dashboard() {
   const router = useRouter();
   const auth = getAuth(app);
   const [user, setUser] = useState<User | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('Account'); // Default tab
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -31,6 +32,24 @@ export default function Dashboard() {
     }).catch((error) => {
       console.error("Logout Error:", error);
     });
+  };
+
+  // Function to render the selected component
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'Account':
+        return <Profile user={user} />;
+      case 'My Doctor':
+        return <div className="bg-white p-6 rounded-lg shadow-md">Doctor Info Coming Soon</div>;
+      case 'My Health':
+        return <div className="bg-white p-6 rounded-lg shadow-md">Health Records Coming Soon</div>;
+      case 'Book Appointment':
+        return <div className="bg-white p-6 rounded-lg shadow-md">Booking System Coming Soon</div>;
+      case 'My Appointments':
+        return <div className="bg-white p-6 rounded-lg shadow-md">Appointments List Coming Soon</div>;
+      default:
+        return <Profile user={user} />;
+    }
   };
 
   return (
@@ -73,7 +92,13 @@ export default function Dashboard() {
               { label: 'Book Appointment', icon: 'calendar_today' },
               { label: 'My Appointments', icon: 'schedule' },
             ].map(({ label, icon }) => (
-              <div key={label} className="flex items-center space-x-2 p-3 rounded-lg hover:bg-blue-100 cursor-pointer">
+              <div
+                key={label}
+                className={`flex items-center space-x-2 p-3 rounded-lg cursor-pointer ${
+                  activeTab === label ? 'bg-blue-200' : 'hover:bg-blue-100'
+                }`}
+                onClick={() => setActiveTab(label)}
+              >
                 <span className="material-icons text-blue-600">
                   <Image src={`${icon}.svg`} alt={icon} width={20} height={20} />
                 </span>
@@ -83,38 +108,9 @@ export default function Dashboard() {
           </nav>
         </aside>
 
-        {/* Main Content */}
-        <main className="flex-1 bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-2xl font-bold mb-6 text-gray-700">Profile Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[
-              { label: 'Email', value: user?.email ?? '', type: 'email' },
-              { label: 'Full Name', value: user?.displayName ?? '', type: 'text' },
-              { label: 'Phone Number', value: '', type: 'tel' },
-              { label: 'Height', value: '', type: 'text' },
-              { label: 'Weight', value: '', type: 'text' },
-              { label: 'Chronic Diseases (if any)', value: '', type: 'text' },
-            ].map(({ label, value, type }) => (
-              <div key={label}>
-                <label className="block text-sm text-gray-600 mb-1">{label}</label>
-                <input
-                  type={type}
-                  value={value}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-blue-300"
-                  placeholder={label}
-                  disabled={!isEditing}
-                />
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-end mt-6 space-x-4">
-            <button
-              onClick={() => setIsEditing((prev) => !prev)}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-            >
-              {isEditing ? 'Save' : 'Edit'}
-            </button>
-          </div>
+        {/* Main Content - Dynamic Component Rendering */}
+        <main className="flex-1">
+          {renderContent()}
         </main>
       </div>
     </div>
