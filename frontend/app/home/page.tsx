@@ -12,6 +12,7 @@ export default function Dashboard() {
   const auth = getAuth(app);
   const [user, setUser] = useState<User | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -41,19 +42,28 @@ export default function Dashboard() {
             <Image src="/logo.png" alt="Logo" width={40} height={40} />
             <span className="text-xl font-bold text-gray-800">YOU COME FIRST</span>
           </div>
+
+          {/* Hamburger Menu for Mobile */}
+          <button 
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="md:hidden text-gray-600 text-2xl"
+          >
+            ☰
+          </button>
+
+          {/* Logout Button */}
           <button
             onClick={handleLogout}
-            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+            className="hidden md:block px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
           >
             Logout
           </button>
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto p-6 flex gap-8">
-        {/* Sidebar */}
-        <aside className="w-64 bg-white p-4 rounded-lg shadow-md">
+      <div className="max-w-7xl mx-auto p-6 flex flex-col md:flex-row gap-8">
+        {/* Sidebar - Hidden on Mobile */}
+        <aside className={`w-64 bg-white p-4 rounded-lg shadow-md md:block ${menuOpen ? "block" : "hidden"}`}>
           <h2 className="text-lg font-semibold mb-4 text-gray-700">My Dashboard</h2>
           <nav className="space-y-3">
             {[
@@ -73,10 +83,10 @@ export default function Dashboard() {
           </nav>
         </aside>
 
-        {/* Form Content */}
+        {/* Main Content */}
         <main className="flex-1 bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-2xl font-bold mb-6 text-gray-700">Profile Information</h2>
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
               { label: 'Email', value: user?.email ?? '', type: 'email' },
               { label: 'Full Name', value: user?.displayName ?? '', type: 'text' },
