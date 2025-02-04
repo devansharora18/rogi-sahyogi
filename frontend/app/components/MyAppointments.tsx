@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getFirestore, collection, query, getDocs, orderBy, Timestamp, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { getFirestore, collection, query, getDocs, orderBy, Timestamp, doc, updateDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { app } from '../firebase/firebase';
 import { format } from 'date-fns';
@@ -80,7 +80,19 @@ const MyAppointments: React.FC = () => {
         ...doc.data()
       })) as Appointment[];
 
-      setAppointments(fetchedAppointments);
+      // Update status for any appointments that have passed the current time
+      const currentTimestamp = Timestamp.now();
+      const updatedAppointments = await Promise.all(fetchedAppointments.map(async (appointment) => {
+        if (appointment.status === 'booked' && appointment.date.seconds < currentTimestamp.seconds) {
+          // Update the status to 'completed' if the appointment time has passed
+          const appointmentRef = doc(db, `user/${uid}/appointments`, appointment.id);
+          await updateDoc(appointmentRef, { status: 'completed' });
+          return { ...appointment, status: 'completed' };
+        }
+        return appointment;
+      }));
+
+      setAppointments(updatedAppointments);
     } catch (error) {
       console.error('Error fetching appointments:', error);
     } finally {
@@ -99,18 +111,12 @@ const MyAppointments: React.FC = () => {
     try {
       const uid = auth.currentUser.uid;
       const appointmentRef = doc(db, `user/${uid}/appointments`, selectedAppointment);
-      
-      // Option 1: Delete the appointment
-      // await deleteDoc(appointmentRef);
-      
-      // Option 2: Update status to cancelled (recommended)
+
       await updateDoc(appointmentRef, {
         status: 'cancelled'
       });
 
-      // Refresh appointments list
-      await fetchAppointments();
-      
+      await fetchAppointments();  // Refresh the list
       setShowCancelModal(false);
       setSelectedAppointment(null);
       alert('Appointment cancelled successfully');
@@ -119,16 +125,6 @@ const MyAppointments: React.FC = () => {
       alert('Error cancelling appointment. Please try again.');
     }
   };
-
-  // ... (getStatusBadge and formatDate functions remain the same)
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -158,6 +154,14 @@ const MyAppointments: React.FC = () => {
   const formatDate = (timestamp: Timestamp) => {
     return format(timestamp.toDate(), 'dd MMMM yyyy hh:mm a');
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
 
   return (
     <>
