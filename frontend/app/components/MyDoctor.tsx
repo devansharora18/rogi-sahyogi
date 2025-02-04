@@ -111,6 +111,8 @@ export default function MyDoctor() {
       try {
         const docSnap = await getDoc(journalRef);
         if (docSnap.exists()) {
+		  startDate = docSnap.id;
+		  console.log(startDate);
           const feeling = docSnap.data().feeling;
           combinedFeeling += `Day ${i + 1} (${formattedDate}): ${feeling}\n\n`;
         } else {
@@ -138,8 +140,10 @@ export default function MyDoctor() {
         const data = await response.json();
         setReport(data.report);
 
+		const datetime = new Date();
+
         // Upload the report to Firebase under user/{uid}/reports/{startdatetoenddate}
-        const reportRef = doc(db, `user/${userId}/reports/${startDate}to${endDate}`);
+        const reportRef = doc(db, `user/${userId}/reports/${datetime}`);
         await setDoc(reportRef, { report: data.report, startDate, endDate });
         console.log('Report saved to Firestore successfully!');
       } catch (error) {

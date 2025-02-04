@@ -37,7 +37,6 @@ export default function MyHealth() {
   const fetchJournals = async (uid: string) => {
     try {
       const journalsRef = collection(db, `user/${uid}/journals`);
-    //   const q = query(journalsRef, orderBy('date', 'desc'));
       const querySnapshot = await getDocs(journalsRef);
       setJournals(querySnapshot.docs.map(doc => ({
         id: doc.id,
@@ -75,7 +74,7 @@ export default function MyHealth() {
     if (reports.length === 0) return <p>No reports available</p>;
     return reports.map((report) => (
       <div key={report.id} className="bg-gray-100 p-4 rounded-lg mb-4">
-        <h4 className="font-semibold text-gray-700">{report.id}</h4>
+        <h4 className="font-semibold text-gray-700">{report.startDate} - {report.endDate}</h4>
         <p className="text-gray-700">{report.report || 'No report generated'}</p>
       </div>
     ));
@@ -83,9 +82,8 @@ export default function MyHealth() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center">
-        <span className="animate-spin inline-block w-5 h-5 border-t-2 border-blue-500 border-solid rounded-full"></span>
-        <p className="ml-2 text-gray-700">Loading...</p>
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }

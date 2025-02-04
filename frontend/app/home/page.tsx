@@ -9,6 +9,7 @@ import { User } from 'firebase/auth';
 import Profile from '../components/Profile';
 import MyDoctor from '../components/MyDoctor';
 import MyHealth from '../components/MyHealth';
+import BookAppointment from '../components/BookAppointment';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -46,8 +47,8 @@ export default function Dashboard() {
       case 'My Health':
 		return <MyHealth />;
 	  case 'Book Appointment':
-        return <div className="bg-white p-6 rounded-lg shadow-md">Booking System Coming Soon</div>;
-      case 'My Appointments':
+		return <BookAppointment />;
+	  case 'My Appointments':
         return <div className="bg-white p-6 rounded-lg shadow-md">Appointments List Coming Soon</div>;
       default:
         return <Profile user={user} />;
