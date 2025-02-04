@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
@@ -8,23 +9,24 @@ const auth = getAuth(app);
 
 // Helper function to parse the plain text report into sections
 const parseReport = (reportText) => {
-  // This regex will look for the following headings followed by a colon and then capture the content until the next heading or end of text
-  const regex = /(Patient Report Symptoms Summary|Duration|Symptom Progression|Possible Conditions|Urgency Level|Additional Notes):\s*([\s\S]*?)(?=(Patient Report Symptoms Summary|Duration|Symptom Progression|Possible Conditions|Urgency Level|Additional Notes):|$)/g;
-  const result = {};
-  let match;
-  while ((match = regex.exec(reportText)) !== null) {
-    const key = match[1];
-    const value = match[2].trim();
-    result[key] = value;
-  }
-  return result;
-};
+	// This regex will look for the following headings followed by a colon and then capture the content until the next heading or end of text
+	const regex = /(Patient Report Symptoms Summary|Duration|Symptom Progression|Possible Conditions|Urgency Level|Additional Notes):\s*([\s\S]*?)(?=(Patient Report Symptoms Summary|Duration|Symptom Progression|Possible Conditions|Urgency Level|Additional Notes):|$)/g;
+	const result = {};
+	let match;
+	while ((match = regex.exec(reportText)) !== null) {
+	  const key = match[1];
+	  const value = match[2].trim();
+	  result[key] = value;
+	}
+	return result;
+  };
 
 export default function MyHealth() {
   const [journals, setJournals] = useState([]);
   const [reports, setReports] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedTab, setSelectedTab] = useState("journals");
+  const [selectedTimeframe, setSelectedTimeframe] = useState("1 Week");
+  const [selectedTab, setSelectedTab] = useState("journal");
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -80,7 +82,6 @@ export default function MyHealth() {
     );
   }
 
-  // Define the order of sections to display in the report
   const reportSections = [
     "Patient Report Symptoms Summary",
     "Duration",
@@ -91,60 +92,106 @@ export default function MyHealth() {
   ];
 
   return (
-    <div className="bg-gray-50 p-6 rounded-lg shadow-md w-full max-w-4xl mx-auto">
-      <h2 className="text-3xl font-bold text-gray-700 text-center mb-6">My Health</h2>
-      
-      {/* Tab Navigation */}
-      <div className="flex mb-6 border-b">
-        <button 
-          onClick={() => setSelectedTab("journals")} 
-          className={`mr-4 pb-2 ${selectedTab === "journals" ? "border-b-2 border-blue-500 text-blue-500 font-bold" : "text-gray-500"}`}
-        >
-          Journal 📖
-        </button>
-        <button 
-          onClick={() => setSelectedTab("reports")} 
-          className={`pb-2 ${selectedTab === "reports" ? "border-b-2 border-green-500 text-green-500 font-bold" : "text-gray-500"}`}
-        >
-          Reports 📊
-        </button>
+    <div className="min-h-screen bg-white p-6">
+      {/* Navigation Tabs */}
+      <div className="flex justify-between items-center mb-8">
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setSelectedTab("journal")}
+            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
+              selectedTab === "journal"
+                ? "bg-blue-500 text-white"
+                : "bg-gray-100 text-gray-600"
+            }`}
+          >
+            Journal
+          </button>
+          <button
+            onClick={() => setSelectedTab("report")}
+            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
+              selectedTab === "report"
+                ? "bg-blue-500 text-white"
+                : "bg-gray-100 text-gray-600"
+            }`}
+          >
+            Report
+          </button>
+        </div>
+        
+        {/* Timeframe Dropdown */}
+        <div className="flex items-center space-x-2">
+          <select
+            value={selectedTimeframe}
+            onChange={(e) => setSelectedTimeframe(e.target.value)}
+            className="bg-transparent text-gray-600 text-sm focus:outline-none"
+          >
+            <option value="1 Week">1 Week</option>
+            <option value="1 Month">1 Month</option>
+            <option value="3 Months">3 Months</option>
+          </select>
+        </div>
       </div>
-      
-      {/* Content based on selected tab */}
-      {selectedTab === "journals" && (
-        <section>
-          {journals.length > 0 ? journals.map((journal) => (
-            <div key={journal.id} className="bg-white p-4 rounded-lg shadow-md mb-4 border-l-4 border-blue-500">
-              <h4 className="font-semibold text-blue-600">{journal.id}</h4>
-              <p className="text-gray-700 mt-2">{journal.feeling || 'No entry available'}</p>
+
+      {selectedTab === "journal" && (
+        <div className="space-y-4">
+        {journals.map((journal) => (
+          <div
+            key={journal.id}
+            className="w-full p-6 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-400 text-white cursor-pointer hover:opacity-95 transition-opacity"
+          >
+			<div className="text-xl font-semibold">
+				{journal.id}
+			</div>
+            <div className="text-xl font-semibold">
+              {journal.feeling}
             </div>
-          )) : <p className="text-gray-500">No journal entries found</p>}
-        </section>
+          </div>
+        ))}
+      </div>
       )}
+
+{selectedTab === "report" && (
+  <section>
+    {reports.length > 0 ? reports.map((report) => {
+      const parsedReport = parseReport(report.report || '');
+	  console.log(parsedReport);
+      return (
+        <div key={report.id} 
+          className="bg-gradient-to-r from-blue-600 to-blue-400 p-8 rounded-3xl text-white mb-4"
+        >
+          <div className="text-sm mb-6">
+            {report.startDate} - {report.endDate}
+          </div>
+
+          <div className="space-y-6">
+            {reportSections.map((section) => (
+              parsedReport[section] && (
+                <div key={section}>
+                  <h3 className="text-xl font-semibold mb-2">{section}</h3>
+                  {section === "Possible Conditions" ? (
+                    <ul className="text-white/80 space-y-1">
+                      {parsedReport[section].split('\n').map((condition, index) => (
+                        <li key={index}>- {condition.trim()}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-white/80">{parsedReport[section]}</p>
+                  )}
+                </div>
+              )
+            ))}
+          </div>
+        </div>
+      );
+    }) : (
+      <p className="text-gray-500">No reports available</p>
+    )}
+  </section>
+)}
+
+
+	  
       
-      {selectedTab === "reports" && (
-        <section>
-          {reports.length > 0 ? reports.map((report) => {
-            // Assuming report.report contains the plain text report
-            const parsedReport = parseReport(report.report || '');
-            return (
-              <div key={report.id} className="bg-white p-6 rounded-lg shadow-md mb-4 border-l-4 border-green-500">
-                <h3 className='text-lg font-semibold text-green-600 mb-4'>
-                  {report.startDate} - {report.endDate}
-                </h3>
-                {reportSections.map((section) => (
-                  parsedReport[section] ? (
-                    <div key={section} className="mb-4">
-                      <h4 className="text-lg font-bold text-green-600">{section}</h4>
-                      <p className="text-gray-700 mt-2 whitespace-pre-line">{parsedReport[section]}</p>
-                    </div>
-                  ) : null
-                ))}
-              </div>
-            );
-          }) : <p className="text-gray-500">No reports available</p>}
-        </section>
-      )}
     </div>
   );
 }

@@ -17,7 +17,7 @@ export default function Dashboard() {
   const router = useRouter();
   const auth = getAuth(app);
   const [user, setUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState('Account');
+  const [activeTab, setActiveTab] = useState('My Journal');
   const [showSOSConfirmation, setShowSOSConfirmation] = useState(false);
   const [isSendingSOS, setIsSendingSOS] = useState(false);	
 
@@ -39,7 +39,7 @@ export default function Dashboard() {
     switch (activeTab) {
       case 'Account':
         return <Profile user={user} />;
-      case 'My Doctor':
+      case 'My Journal':
         return <MyDoctor />;
       case 'My Health':
         return <MyHealth />;
@@ -90,12 +90,13 @@ export default function Dashboard() {
 
 
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-700">
+    <div className="min-h-screen bg-white text-gray-700">
       {/* Header */}
-      <header className="bg-white shadow-md p-4 sticky top-0 z-10 flex justify-between items-center">
+      <header className="bg-white p-4 sticky top-0 z-10 flex justify-between items-center">
         <div className="flex items-center space-x-3">
-          <Image src="/logo.png" alt="Logo" width={40} height={40} />
-          <span className="text-xl font-bold text-gray-800">RogiSahyogi</span>
+          <Image className='hidden md:block' src="/logo.png" alt="Logo" width={60} height={60} />
+		  <Image className='md:hidden' src="/logo.png" alt="Logo" width={40} height={40} />
+          <span className="text-2xl md:text-3xl font-bold text-gray-800">RogiSahyogi</span>
         </div>
         <button
           onClick={handleSOS}
@@ -105,16 +106,49 @@ export default function Dashboard() {
         </button>
       </header>
 
+	  <div className="mx-auto py-6 flex flex-col md:flex-row md:gap-8">
+
+
+	  <aside className={`w-64 bg-white p-4 rounded-lg hidden md:block`}>
+          <h2 className="text-2xl font-semibold mb-4 text-gray-700">My Dashboard</h2>
+          <nav className="space-y-3">
+            {[
+              { label: 'Account', icon: 'person' },
+			  { label: 'My Journal', icon: 'medical_services' },
+			  { label: 'My Health', icon: 'favorite' },
+			  { label: 'Book Appointment', icon: 'calendar_today' },
+			  { label: 'My Appointments', icon: 'schedule' },
+            ].map(({ label, icon }) => (
+              <div
+                key={label}
+                className={`flex items-center space-x-2 p-3 rounded-lg cursor-pointer `}
+                onClick={() => setActiveTab(label)}
+              >
+                <span className="material-icons text-blue-600">
+                  <Image src={`${icon}.svg`} alt={icon} width={20} height={20} />
+                </span>
+                <span className={`${
+                  activeTab === label ? 'text-blue-800 font-extrabold' : 'hover:text-blue-700 text-gray-800'
+                }`}>{label}</span>
+              </div>
+            ))}
+          </nav>
+        </aside>
+
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto p-6 flex-1">
+      <div className="min-w-[95vw] md:min-w-0 flex-1">
         {renderContent()}
       </div>
 
+	  </div>
+
+	  
+
       {/* Bottom Navigation for Mobile */}
-      <nav className="fixed bottom-0 left-0 w-full bg-white shadow-md p-2 flex justify-around">
+      <nav className="fixed bottom-0 left-0 w-full bg-white p-2 flex justify-around md:hidden">
         {[
           { label: 'Account', icon: 'person' },
-          { label: 'My Doctor', icon: 'medical_services' },
+          { label: 'My Journal', icon: 'medical_services' },
           { label: 'My Health', icon: 'favorite' },
           { label: 'Book Appointment', icon: 'calendar_today' },
           { label: 'My Appointments', icon: 'schedule' },

@@ -19,3 +19,21 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+
+.custom {
+	appearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+  
+	background-image: none;
+	
+	padding-right: 0rem;
+	padding: 0.75rem 0.5rem 0.75rem 0.75rem;
+  }
+  
+  .custom::-ms-expand {
+	display: none;
+  }
+  
+  
