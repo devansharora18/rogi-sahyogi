@@ -10,6 +10,7 @@ import Profile from '../components/Profile';
 import MyDoctor from '../components/MyDoctor';
 import MyHealth from '../components/MyHealth';
 import BookAppointment from '../components/BookAppointment';
+import MyAppointments from '../components/MyAppointments';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -49,8 +50,8 @@ export default function Dashboard() {
 	  case 'Book Appointment':
 		return <BookAppointment />;
 	  case 'My Appointments':
-        return <div className="bg-white p-6 rounded-lg shadow-md">Appointments List Coming Soon</div>;
-      default:
+		return <MyAppointments />;
+	  default:
         return <Profile user={user} />;
     }
   };

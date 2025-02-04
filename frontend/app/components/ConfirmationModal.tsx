@@ -27,18 +27,17 @@ interface Report {
   report: string;
   startDate: string;
 }
-
 const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
-  isOpen,
-  onClose,
-  doctor,
-  estimatedTime,
-  reportsToSubmit,
-  setReportsToSubmit,
-  onConfirm,
-}) => {
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
-  const [userReports, setUserReports] = useState<Report[]>([]);
+	isOpen,
+	onClose,
+	doctor,
+	estimatedTime,
+	reportsToSubmit,
+	setReportsToSubmit,
+	onConfirm,
+  }) => {
+	const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+	const [userReports, setUserReports] = useState<Report[]>([]);
 
   useEffect(() => {
     const fetchReports = async () => {
@@ -98,6 +97,13 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
   if (!isOpen) return null;
 
+  const filterPassedTime = (time: Date) => {
+    const currentDate = new Date();
+    const selectedDate = new Date(time);
+
+    return currentDate.getTime() < selectedDate.getTime();
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg p-6 max-w-md w-full">
@@ -114,14 +120,20 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Select Appointment Date:
+            Select Appointment Date and Time:
           </label>
           <DatePicker
             selected={selectedDate}
             onChange={(date: Date | null) => setSelectedDate(date)}
             className="w-full p-2 border rounded-lg"
-            dateFormat="dd/MM/yyyy"
+            dateFormat="dd/MM/yyyy h:mm aa"
+            showTimeSelect
+            timeFormat="h:mm aa"
+            timeIntervals={30}
+            timeCaption="Time"
             minDate={new Date()}
+            filterTime={filterPassedTime}
+            placeholderText="Select date and time"
           />
         </div>
         
