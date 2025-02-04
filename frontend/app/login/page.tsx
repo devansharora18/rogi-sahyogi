@@ -33,11 +33,11 @@ export default function Signup() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-blue-100 to-white md:flex-row md:bg-none md:bg-cover md:bg-center" style={{ backgroundImage: "url('/background-image.png')" }}>
+    <div className="flex flex-col min-h-screen md:flex-row bg-none bg-cover bg-center" style={{ backgroundImage: "url('/background-image.png')" }}>
       {/* Logo Section */}
       <div className="w-full md:w-1/2 flex flex-col items-center justify-center p-4 md:p-8">
         <div className="flex flex-col items-center">
-          <div className="rounded-full bg-white p-3 mb-4 shadow-lg">
+          <div className="rounded-full mb-4 shadow-lg">
             <Image src="/logo.png" alt="Logo" width={100} height={100} className="w-24 h-24 md:w-32 md:h-32" />
           </div>
           <h1 className="text-3xl md:text-5xl font-bold text-blue-600 text-center">RogiSahyogi</h1>

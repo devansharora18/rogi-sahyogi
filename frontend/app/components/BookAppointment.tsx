@@ -3,7 +3,6 @@ import { doctors as doctorsData } from '../components/data/doctors.js';
 import { haversine } from '../utils/haversine';
 import ConfirmationModal from './ConfirmationModal';
 
-
 interface Doctor {
   name: string;
   district: string;
@@ -28,6 +27,7 @@ export default function BookAppointment() {
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [estimatedTime, setEstimatedTime] = useState("");
   const [reportsToSubmit, setReportsToSubmit] = useState(0);
+  const [expandedDoctor, setExpandedDoctor] = useState<string | null>(null);
 
   useEffect(() => {
     const getLocation = () => {
@@ -68,7 +68,7 @@ export default function BookAppointment() {
         (a.distance || Infinity) - (b.distance || Infinity)
       );
 
-      setNearestDoctors(sortedDoctors.slice(0, 5));
+      setNearestDoctors(sortedDoctors);
     }
   }, [userLocation]);
 
@@ -81,6 +81,10 @@ export default function BookAppointment() {
     );
     setSelectedDoctor(doctor);
     setShowConfirmationModal(true);
+  };
+
+  const toggleDetails = (doctorName: string) => {
+    setExpandedDoctor(prev => prev === doctorName ? null : doctorName);
   };
 
   if (loading) {
@@ -100,24 +104,33 @@ export default function BookAppointment() {
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md max-w-4xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6 text-gray-700">Find Nearby Doctors</h2>
+    <div className="bg-white p-4 md:p-6 rounded-lg shadow-md max-w-4xl mx-auto">
+      <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-gray-700">Find Nearby Doctors</h2>
       
       <div className="space-y-4">
         {nearestDoctors.map((doctor) => (
           <div key={doctor.name} className="bg-gray-50 p-4 rounded-lg hover:shadow-lg transition-shadow border border-gray-200">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <div className="flex items-center gap-4 mb-2">
-                  <h3 className="text-xl font-semibold text-gray-800">
+            <div className="flex flex-col md:flex-row justify-between items-start">
+              <div className="flex-1 w-full">
+                <div className="flex flex-wrap items-center gap-2 md:gap-4 mb-2">
+                  <h3 className="text-lg md:text-xl font-semibold text-gray-800">
                     {doctor.name}
                   </h3>
-                  <span className="px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+                  <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs md:text-sm rounded-full">
                     {doctor.yearsOfExperience} years experience
                   </span>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="md:hidden">
+                  <button 
+                    className="text-blue-600 underline text-sm mb-2"
+                    onClick={() => toggleDetails(doctor.name)}
+                  >
+                    {expandedDoctor === doctor.name ? 'Hide Details' : 'View Details'}
+                  </button>
+                </div>
+
+                <div className="hidden md:grid md:grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-gray-600 mb-1">
                       <span className="font-medium">Distance:</span> {doctor.distance?.toFixed(1)} km
@@ -139,11 +152,31 @@ export default function BookAppointment() {
                     </p>
                   </div>
                 </div>
+
+                {expandedDoctor === doctor.name && (
+                  <div className="md:hidden grid grid-cols-1 gap-2 text-sm mt-2">
+                    <p className="text-gray-600">
+                      <span className="font-medium">Distance:</span> {doctor.distance?.toFixed(1)} km
+                    </p>
+                    <p className="text-gray-600">
+                      <span className="font-medium">Location:</span> {doctor.address}
+                    </p>
+                    <p className="text-gray-600">
+                      <span className="font-medium">Rating:</span> ⭐ {doctor.rating}/5
+                    </p>
+                    <p className="text-gray-600">
+                      <span className="font-medium">Wait List:</span> {doctor.waitingList} patients ahead
+                    </p>
+                    <p className="text-gray-600">
+                      <span className="font-medium">Consultation Fee:</span> ₹{doctor.price}
+                    </p>
+                  </div>
+                )}
               </div>
 
-              <div className="flex flex-col items-end gap-2 ml-4">
+              <div className="w-full md:w-auto mt-4 md:mt-0 md:ml-4">
                 <button 
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm w-full md:w-auto"
                   onClick={() => handleScheduleVisit(doctor)}
                 >
                   Schedule Visit
@@ -165,7 +198,6 @@ export default function BookAppointment() {
         reportsToSubmit={reportsToSubmit}
         setReportsToSubmit={setReportsToSubmit}
         onConfirm={(selectedDate) => {
-          // You can process selectedDate or call a function here if necessary
           console.log('Appointment Date:', selectedDate);
         }}
       />

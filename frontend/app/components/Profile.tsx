@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { getAuth, signOut } from 'firebase/auth';
 import { app } from '../firebase/firebase';
+import { useRouter } from 'next/navigation';
+
 
 const db = getFirestore(app);
 const auth = getAuth(app);
@@ -22,6 +24,9 @@ export default function Profile() {
   const [profileData, setProfileData] = useState<User | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [profileAttempted, setProfileAttempted] = useState(false);
+
+  const router = useRouter();
+  
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -82,6 +87,14 @@ export default function Profile() {
       </div>
     );
   }
+  
+  const handleLogout = () => {
+    signOut(auth).then(() => {
+      router.push('/login');
+    }).catch((error) => {
+      console.error("Logout Error:", error);
+    });
+  };
 
   if (!profileData) {
     return (
@@ -118,13 +131,19 @@ export default function Profile() {
           </div>
         ))}
       </div>
-      <div className="flex justify-end mt-6">
+      <div className="flex justify-end mt-6 mb-4">
         <button
           onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
         >
           {isEditing ? 'Save' : 'Edit'}
         </button>
+		<button
+            onClick={handleLogout}
+            className="px-4 mx-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+          >
+            Logout
+          </button>
       </div>
     </div>
   );

@@ -199,5 +199,26 @@ export const doctors =
     yearsOfExperience: 6,
     waitingList: 1,
     price: 350
-  }
+  },
+	{
+		name: "Dr. Vidhi Agarwal",
+		district: "Chennai",
+		latitude: 13.0827,
+		longitude: 80.2707,
+		address: "Apollo Hospitals, Greams Road, Chennai",
+		yearsOfExperience: 0,
+		waitingList: 0,
+		price: 0,
+		rating: 0
+	},
+	{
+		name: "Dr. Sneha Kapoor",
+		district: "Chennai",
+		latitude: 13.0827,
+		longitude: 80.2707,
+		address: "Apollo Hospitals, Greams Road, Chennai",
+		yearsOfExperience: 0,
+		waitingList: 0,
+		price: 0
+	}
 ];

@@ -125,7 +125,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           <DatePicker
             selected={selectedDate}
             onChange={(date: Date | null) => setSelectedDate(date)}
-            className="w-full p-2 border rounded-lg"
+            className="w-full p-2 border rounded-lg cursor-pointer"
             dateFormat="dd/MM/yyyy h:mm aa"
             showTimeSelect
             timeFormat="h:mm aa"

@@ -192,7 +192,7 @@ export default function MyDoctor() {
         />
         <button 
           onClick={startListening} 
-          className={`p-3 rounded-full ${isListening ? 'bg-red-500' : 'bg-blue-500'} text-white transition`}
+          className={`p-3 rounded-lg ${isListening ? 'bg-red-500' : 'bg-blue-500'} text-white transition`}
         >
           🎤
         </button>

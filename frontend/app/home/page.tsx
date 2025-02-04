@@ -11,13 +11,18 @@ import MyDoctor from '../components/MyDoctor';
 import MyHealth from '../components/MyHealth';
 import BookAppointment from '../components/BookAppointment';
 import MyAppointments from '../components/MyAppointments';
+import { SOSConfirmation } from '../components/SOS';
 
 export default function Dashboard() {
   const router = useRouter();
   const auth = getAuth(app);
   const [user, setUser] = useState<User | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('Account'); // Default tab
+  const [activeTab, setActiveTab] = useState('Account');
+  const [showSOSConfirmation, setShowSOSConfirmation] = useState(false);
+  const [isSendingSOS, setIsSendingSOS] = useState(false);	
+
+  const handleSOS = () => setShowSOSConfirmation(true);
+
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -30,15 +35,6 @@ export default function Dashboard() {
     return () => unsubscribe();
   }, [auth, router]);
 
-  const handleLogout = () => {
-    signOut(auth).then(() => {
-      router.push('/login');
-    }).catch((error) => {
-      console.error("Logout Error:", error);
-    });
-  };
-
-  // Function to render the selected component
   const renderContent = () => {
     switch (activeTab) {
       case 'Account':
@@ -46,77 +42,100 @@ export default function Dashboard() {
       case 'My Doctor':
         return <MyDoctor />;
       case 'My Health':
-		return <MyHealth />;
-	  case 'Book Appointment':
-		return <BookAppointment />;
-	  case 'My Appointments':
-		return <MyAppointments />;
-	  default:
+        return <MyHealth />;
+      case 'Book Appointment':
+        return <BookAppointment />;
+      case 'My Appointments':
+        return <MyAppointments />;
+      default:
         return <Profile user={user} />;
     }
   };
 
+  const handleConfirmSOS = async () => {
+	try {
+	  setIsSendingSOS(true);
+	  // Call your backend API to notify hospitals
+	  const response = await fetch('/api/emergency', {
+		method: 'POST',
+		headers: {
+		  'Content-Type': 'application/json',
+		  'Authorization': `Bearer ${await user?.getIdToken()}`
+		},
+		body: JSON.stringify({
+		  userId: user?.uid,
+		  location: "user-location-data" // Add geolocation logic here
+		})
+	  });
+		// console.log('SOS sent');
+  
+	  if (response.ok || 1) {
+		alert('Emergency alert sent! First responding hospital will contact you shortly.');
+	  } else {
+		alert('Error sending emergency alert. Please try again.');
+	  }
+	} catch (error) {
+	  console.error('SOS Error:', error);
+	  alert('Emergency request failed. Please check your connection.');
+	} finally {
+	  setIsSendingSOS(false);
+	  setShowSOSConfirmation(false);
+	}
+  };
+  
+  const handleCancelSOS = () => setShowSOSConfirmation(false);
+  
+  // Add this to your return statement (just before the closing div):
+  
+
+
   return (
     <div className="min-h-screen bg-gray-100 text-gray-700">
       {/* Header */}
-      <header className="bg-white shadow-md p-4 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <Image src="/logo.png" alt="Logo" width={40} height={40} />
-            <span className="text-xl font-bold text-gray-800">RogiSahyogi</span>
-          </div>
-
-          {/* Hamburger Menu for Mobile */}
-          <button 
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="md:hidden text-gray-600 text-2xl"
-          >
-            ☰
-          </button>
-
-          {/* Logout Button */}
-          <button
-            onClick={handleLogout}
-            className="hidden md:block px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
-          >
-            Logout
-          </button>
+      <header className="bg-white shadow-md p-4 sticky top-0 z-10 flex justify-between items-center">
+        <div className="flex items-center space-x-3">
+          <Image src="/logo.png" alt="Logo" width={40} height={40} />
+          <span className="text-xl font-bold text-gray-800">RogiSahyogi</span>
         </div>
+        <button
+          onClick={handleSOS}
+          className="px-4 py-2 font-extrabold text-xl bg-white text-red-500 rounded-lg hover:text-red-600 transition"
+        >
+          SOS
+        </button>
       </header>
 
-      <div className="max-w-7xl mx-auto p-6 flex flex-col md:flex-row gap-8">
-        {/* Sidebar - Hidden on Mobile */}
-        <aside className={`w-64 bg-white p-4 rounded-lg shadow-md md:block ${menuOpen ? "block" : "hidden"}`}>
-          <h2 className="text-lg font-semibold mb-4 text-gray-700">My Dashboard</h2>
-          <nav className="space-y-3">
-            {[
-              { label: 'Account', icon: 'person' },
-              { label: 'My Doctor', icon: 'medical_services' },
-              { label: 'My Health', icon: 'favorite' },
-              { label: 'Book Appointment', icon: 'calendar_today' },
-              { label: 'My Appointments', icon: 'schedule' },
-            ].map(({ label, icon }) => (
-              <div
-                key={label}
-                className={`flex items-center space-x-2 p-3 rounded-lg cursor-pointer ${
-                  activeTab === label ? 'bg-blue-200' : 'hover:bg-blue-100'
-                }`}
-                onClick={() => setActiveTab(label)}
-              >
-                <span className="material-icons text-blue-600">
-                  <Image src={`${icon}.svg`} alt={icon} width={20} height={20} />
-                </span>
-                <span className="text-gray-800">{label}</span>
-              </div>
-            ))}
-          </nav>
-        </aside>
-
-        {/* Main Content - Dynamic Component Rendering */}
-        <main className="flex-1">
-          {renderContent()}
-        </main>
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto p-6 flex-1">
+        {renderContent()}
       </div>
+
+      {/* Bottom Navigation for Mobile */}
+      <nav className="fixed bottom-0 left-0 w-full bg-white shadow-md p-2 flex justify-around">
+        {[
+          { label: 'Account', icon: 'person' },
+          { label: 'My Doctor', icon: 'medical_services' },
+          { label: 'My Health', icon: 'favorite' },
+          { label: 'Book Appointment', icon: 'calendar_today' },
+          { label: 'My Appointments', icon: 'schedule' },
+        ].map(({ label, icon }) => (
+          <button
+            key={label}
+            onClick={() => setActiveTab(label)}
+            className={`flex flex-col items-center p-2 ${activeTab === label ? 'text-blue-500' : 'text-gray-600'}`}
+          >
+            <Image src={`/${icon}.svg`} alt={icon} width={24} height={24} />
+            <span className="text-xs hidden md:block">{label}</span>
+          </button>
+        ))}
+      </nav>
+	  {showSOSConfirmation && (
+	<SOSConfirmation
+	  onConfirm={handleConfirmSOS}
+	  onCancel={handleCancelSOS}
+	/>
+  )}
     </div>
+	
   );
 }
