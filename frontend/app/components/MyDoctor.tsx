@@ -11,14 +11,13 @@ export default function MyDoctor() {
   const [feeling, setFeeling] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [language, setLanguage] = useState('en-US');
-  const [userId, setUserId] = useState<string | null>(null);
-  const [reportDay, setReportDay] = useState(1); // Default last 1 day
-  const [report, setReport] = useState<string | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const [userId, setUserId] = useState(null);
+  const [reportDay, setReportDay] = useState(1);
+  const [report, setReport] = useState(null);
+  const textareaRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [recognition, setRecognition] = useState(null);
 
-
-  // Get authenticated user UID
   useEffect(() => {
     onAuthStateChanged(auth, (user) => {
       if (user) setUserId(user.uid);
@@ -43,26 +42,50 @@ export default function MyDoctor() {
   ];
 
   const startListening = () => {
-    if (!('webkitSpeechRecognition' in window)) {
-      alert('Speech recognition is not supported in your browser.');
-      return;
+	if (!('webkitSpeechRecognition' in window)) {
+	  alert('Speech recognition is not supported in your browser.');
+	  return;
+	}
+  
+	if (isListening) {
+	  stopListening();
+	  return;
+	}
+  
+	const recognitionInstance = new (window as any).webkitSpeechRecognition();
+	recognitionInstance.continuous = true;
+	recognitionInstance.interimResults = true;
+	recognitionInstance.lang = language;
+  
+	recognitionInstance.onstart = () => setIsListening(true);
+	recognitionInstance.onend = () => setIsListening(false);
+  
+	recognitionInstance.onresult = (event) => {
+	  const results = Array.from(event.results);
+	  const newTranscript = results
+		.filter(result => result.isFinal)
+		.map(result => result[0].transcript)
+		.join(' ');
+	  
+	  if (newTranscript) {
+		setFeeling(prev => 
+		  prev.endsWith(newTranscript.trim()) ? 
+		  prev : 
+		  `${prev} ${newTranscript}`.trim()
+		);
+	  }
+	};
+  
+	recognitionInstance.start();
+	setRecognition(recognitionInstance);
+  };
+  
+
+  const stopListening = () => {
+    if (recognition) {
+      recognition.stop();
+      setRecognition(null);
     }
-
-    const recognition = new (window as any).webkitSpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = language;
-
-    recognition.onstart = () => setIsListening(true);
-    recognition.onend = () => setIsListening(false);
-
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let transcript = event.results[0][0].transcript;
-      setFeeling(transcript);
-      setTimeout(adjustTextareaHeight, 10);
-    };
-
-    recognition.start();
   };
 
   const submitFeeling = async () => {
@@ -71,13 +94,13 @@ export default function MyDoctor() {
       return;
     }
 
-    const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const date = new Date().toISOString().split('T')[0];
     const journalRef = doc(db, `user/${userId}/journals/${date}`);
 
     try {
       await setDoc(journalRef, { feeling }, { merge: true });
       alert('Journal entry saved successfully!');
-      setFeeling(''); // Clear input after saving
+      setFeeling('');
       setTimeout(adjustTextareaHeight, 10);
     } catch (error) {
       console.error('Error saving entry:', error);
@@ -91,7 +114,7 @@ export default function MyDoctor() {
       return;
     }
 
-    setIsLoading(true); // Start loading
+    setIsLoading(true);
 
     const currentDate = new Date();
     let combinedFeeling = '';
@@ -103,7 +126,6 @@ export default function MyDoctor() {
       date.setDate(date.getDate() - i);
       const formattedDate = date.toISOString().split('T')[0];
 
-      // Set startDate to the earliest date
       if (i === reportDay - 1) startDate = formattedDate;
 
       const journalRef = doc(db, `user/${userId}/journals/${formattedDate}`);
@@ -111,8 +133,7 @@ export default function MyDoctor() {
       try {
         const docSnap = await getDoc(journalRef);
         if (docSnap.exists()) {
-		  startDate = docSnap.id;
-		  console.log(startDate);
+          startDate = docSnap.id;
           const feeling = docSnap.data().feeling;
           combinedFeeling += `Day ${i + 1} (${formattedDate}): ${feeling}\n\n`;
         } else {
@@ -127,7 +148,6 @@ export default function MyDoctor() {
     }
 
     if (combinedFeeling.trim()) {
-      // Set endDate to the current date
       endDate = currentDate.toISOString().split('T')[0];
 
       try {
@@ -140,9 +160,8 @@ export default function MyDoctor() {
         const data = await response.json();
         setReport(data.report);
 
-		const datetime = new Date();
+        const datetime = new Date();
 
-        // Upload the report to Firebase under user/{uid}/reports/{startdatetoenddate}
         const reportRef = doc(db, `user/${userId}/reports/${datetime}`);
         await setDoc(reportRef, { report: data.report, startDate, endDate });
         console.log('Report saved to Firestore successfully!');
@@ -154,14 +173,13 @@ export default function MyDoctor() {
       setReport('No journal entries found for the selected period.');
     }
 
-    setIsLoading(false); // Stop loading
+    setIsLoading(false);
   };
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-4 text-gray-700">How are you feeling today?</h2>
 
-      {/* Language Dropdown */}
       <div className="mb-4">
         <label className="block text-gray-600 text-sm mb-1">Choose Language:</label>
         <select 
@@ -177,7 +195,6 @@ export default function MyDoctor() {
         </select>
       </div>
 
-      {/* Expandable Textarea with Mic Button */}
       <div className="flex items-start space-x-3">
         <textarea
           ref={textareaRef}
@@ -198,7 +215,6 @@ export default function MyDoctor() {
         </button>
       </div>
 
-      {/* Finish Button */}
       <button 
         onClick={submitFeeling} 
         className="mt-4 w-full bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition"
@@ -206,13 +222,11 @@ export default function MyDoctor() {
         Finish & Save 📂
       </button>
 
-      {/* Health Report Section */}
       <div className="mt-6">
         <h3 className="text-xl font-semibold text-gray-700 flex items-center">
           HEALTH REPORT <span className="ml-2">🧑‍⚕️📋</span>
         </h3>
 
-        {/* Report Selection */}
         <div className="mt-4">
           <label className="block text-gray-600 text-sm mb-1">Select Days:</label>
           <select 
@@ -228,31 +242,29 @@ export default function MyDoctor() {
           </select>
         </div>
 
-        {/* Generate Report Button */}
-      <button 
-        onClick={generateReport} 
-        className={`mt-4 w-full text-white p-3 rounded-lg transition ${
-          isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'
-        }`}
-        disabled={isLoading} // Disable while loading
-      >
-        {isLoading ? 'Generating Report...' : 'Generate Report 📊'}
-      </button>
+        <button 
+          onClick={generateReport} 
+          className={`mt-4 w-full text-white p-3 rounded-lg transition ${
+            isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'
+          }`}
+          disabled={isLoading}
+        >
+          {isLoading ? 'Generating Report...' : 'Generate Report 📊'}
+        </button>
 
-      {/* Display Report */}
-      {isLoading && (
-        <div className="mt-4 text-center text-gray-600">
-          <span className="animate-spin inline-block w-5 h-5 border-t-2 border-blue-500 border-solid rounded-full"></span> 
-          Generating your report...
-        </div>
-      )}
+        {isLoading && (
+          <div className="mt-4 text-center text-gray-600">
+            <span className="animate-spin inline-block w-5 h-5 border-t-2 border-blue-500 border-solid rounded-full"></span> 
+            Generating your report...
+          </div>
+        )}
 
-      {report && !isLoading && (
-        <div className="mt-4 bg-gray-100 p-4 rounded-lg shadow-sm">
-          <h3 className="text-xl font-semibold text-gray-700">Health Report 🧑‍⚕️📋</h3>
-          <p className="text-gray-700 whitespace-pre-wrap">{report}</p>
-        </div>
-      )}
+        {report && !isLoading && (
+          <div className="mt-4 bg-gray-100 p-4 rounded-lg shadow-sm">
+            <h3 className="text-xl font-semibold text-gray-700">Health Report 🧑‍⚕️📋</h3>
+            <p className="text-gray-700 whitespace-pre-wrap">{report}</p>
+          </div>
+        )}
       </div>
     </div>
   );
