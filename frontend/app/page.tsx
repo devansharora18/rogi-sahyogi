@@ -17,6 +17,7 @@ export default function Home() {
         router.push('/login');
       } else {
         setUser(user);
+		router.push('/home')
       }
       setLoading(false);
     });

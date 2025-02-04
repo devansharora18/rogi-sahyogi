@@ -98,13 +98,22 @@ export default function Dashboard() {
 		  <Image className='md:hidden' src="/logo.png" alt="Logo" width={40} height={40} />
           <span className="text-2xl md:text-3xl font-bold text-gray-800">RogiSahyogi</span>
         </div>
-        <button
+        
+      </header>
+
+	  <button
           onClick={handleSOS}
-          className="px-4 py-2 font-extrabold text-xl bg-white text-red-500 rounded-lg hover:text-red-600 transition"
+          className="px-4 py-4 font-extrabold text-xl bg-red-500 text-white hover:bg-red-600 transition fixed right-5 rounded-xl bottom-32 md:hidden"
         >
           SOS
         </button>
-      </header>
+
+		<button
+          onClick={handleSOS}
+          className="px-4 py-4 font-extrabold text-xl bg-red-500 text-white hover:bg-red-600 transition fixed right-5 rounded-xl top-20 z-50 hidden md:block"
+        >
+          SOS
+        </button>
 
 	  <div className="mx-auto py-6 flex flex-col md:flex-row md:gap-8">
 

@@ -259,9 +259,10 @@ export default function MyDoctor() {
 
         {/* Health Report Section */}
         <div className="mt-8">
+		<div className='flex flex-row space-x-4 justify-between items-center'>
         <h2 className="text-3xl font-bold text-gray-900 my-12"> HEALTH REPORT </h2>
-		<div className="mt-4">
-            <label className="block text-gray-600 text-sm mb-1">Select Days:</label>
+		<div className="">
+            {/* <label className="block text-gray-600 text-sm mb-1">Select Days:</label> */}
             <select
               value={reportDay}
               onChange={(e) => setReportDay(Number(e.target.value))}
@@ -274,6 +275,7 @@ export default function MyDoctor() {
               ))}
             </select>
           </div>
+		  </div>
 
           <button
             onClick={handleGenerateReport}
