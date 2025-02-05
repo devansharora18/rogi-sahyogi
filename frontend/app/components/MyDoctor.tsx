@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { app } from '../firebase/firebase';
+import AutoResizeTextarea from './TextArea';
+
 
 const db = getFirestore(app);
 const auth = getAuth(app);
@@ -24,10 +26,12 @@ export default function MyDoctor() {
   }, []);
 
   const adjustTextareaHeight = () => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-    }
+	if (textareaRef.current) {
+	  // Reset height FIRST to trigger recalc
+	  textareaRef.current.style.height = 'auto';
+	  // Set new height based on content
+	  textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+	}
   };
 
   const languages = [
@@ -39,6 +43,54 @@ export default function MyDoctor() {
     { code: 'zh-CN', name: 'Mandarin' },
     { code: 'ta-IN', name: 'Tamil' },
   ];
+
+
+  const startListening = () => {
+	if (!('webkitSpeechRecognition' in window)) {
+	  alert('Speech recognition is not supported in your browser.');
+	  return;
+	}
+  
+	if (isListening) {
+	  stopListening();
+	  return;
+	}
+  
+	const recognitionInstance = new (window as any).webkitSpeechRecognition();
+	recognitionInstance.continuous = true;
+	recognitionInstance.interimResults = true;
+	recognitionInstance.lang = language;
+  
+	recognitionInstance.onstart = () => setIsListening(true);
+	recognitionInstance.onend = () => setIsListening(false);
+  
+	recognitionInstance.onresult = (event) => {
+	  const results = Array.from(event.results);
+	  const newTranscript = results
+		.filter(result => result.isFinal)
+		.map(result => result[0].transcript)
+		.join(' ');
+	  
+	  if (newTranscript) {
+		setFeeling(prev => 
+		  prev.endsWith(newTranscript.trim()) ? 
+		  prev : 
+		  `${prev} ${newTranscript}`.trim()
+		);
+	  }
+	};
+  
+	recognitionInstance.start();
+	setRecognition(recognitionInstance);
+  };
+  
+
+  const stopListening = () => {
+    if (recognition) {
+      recognition.stop();
+      setRecognition(null);
+    }
+  };
 
   const handleSave = async () => {
     // You can replace this with your save logic (e.g. setDoc to Firestore)
@@ -55,7 +107,7 @@ export default function MyDoctor() {
     const journalRef = doc(db, `user/${userId}/journals/${date}`);
 
     try {
-      await setDoc(journalRef, { feeling }, { merge: true });
+      await setDoc(journalRef, { feeling, date }, { merge: true });
       alert('Journal entry saved successfully!');
       setFeeling('');
       setTimeout(adjustTextareaHeight, 10);
@@ -115,12 +167,16 @@ export default function MyDoctor() {
         });
 
         const data = await response.json();
-        setReport(data.report);
+		setReport(data.report);
+		console.log(data.report);
 
-        const datetime = new Date();
+		const datetime = new Date();
+		const reportRef = doc(db, `user/${userId}/reports/${datetime}`);
 
-        const reportRef = doc(db, `user/${userId}/reports/${datetime}`);
-        await setDoc(reportRef, { report: data.report, startDate, endDate });
+
+        await setDoc(reportRef, { report: data.report.replace(/\n/g, "\\n"), startDate, endDate });
+		// setReport(data.report.replace("\\n", /\n/g));
+
         console.log('Report saved to Firestore successfully!');
       } catch (error) {
         console.error('Error calling API or saving report:', error);
@@ -133,6 +189,10 @@ export default function MyDoctor() {
     setIsLoading(false);
   };
 
+  useEffect(() => {
+	adjustTextareaHeight();
+  }, [feeling]); // Trigger on content change
+
   return (
     <div className="bg-gray-50 min-h-screen flex justify-center ">
       <div className="bg-white rounded-xl p-8 w-full md:max-w-7xl">
@@ -140,22 +200,26 @@ export default function MyDoctor() {
           How are you feeling today?
         </h2>
         <div className="hidden md:flex md:flex-row md:space-x-4 md:space-y-0">
-          <textarea
-            ref={textareaRef}
+          <AutoResizeTextarea
+            // ref={textareaRef}
             rows={1}
             value={feeling}
             onChange={(e) => {
               setFeeling(e.target.value);
-              adjustTextareaHeight();
+            //   adjustTextareaHeight();
             }}
-            className="p-3 border border-gray-300 rounded-lg focus:ring focus:ring-blue-300 resize-none w-[50vw]"
+			// style={{ overflow: 'hidden' }}
+            className="p-3 border border-gray-300 rounded-lg focus:ring focus:ring-blue-300 w-[50vw] "
             placeholder="Tell here..."
           />
 
           {/* Row with microphone button and language select */}
           <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
+			<div>
             <button
-              onClick={() => setIsListening(!isListening)}
+              onClick={() => {setIsListening(!isListening);
+				startListening();
+			  }}
               className={`p-3 rounded-lg text-white transition flex-1 ${
                 isListening ? 'bg-red-500' : 'bg-blue-500 hover:bg-blue-600'
               }`}
@@ -165,6 +229,7 @@ export default function MyDoctor() {
 			</svg>
 
             </button>
+			</div>
             <div className="relative">
   <select
     value={language}
@@ -188,12 +253,14 @@ export default function MyDoctor() {
           </div>
 
           {/* Save Entry Button */}
+		  <div>
           <button
             onClick={submitFeeling}
-            className=" bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition"
+            className=" bg-green-500 text-white p-3 rounded-lg hover:bg-green-600"
           >
             Save
           </button>
+		  </div>
 
         </div>
 

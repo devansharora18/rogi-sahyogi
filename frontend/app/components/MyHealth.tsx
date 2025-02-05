@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { app } from '../firebase/firebase';
 
@@ -51,7 +51,8 @@ export default function MyHealth() {
   const fetchJournals = async (uid) => {
     try {
       const journalsRef = collection(db, `user/${uid}/journals`);
-      const querySnapshot = await getDocs(journalsRef);
+	  const sort = query(journalsRef, orderBy('date', 'desc'));
+      const querySnapshot = await getDocs(sort);
       setJournals(querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -159,11 +160,11 @@ export default function MyHealth() {
         <div key={report.id} 
           className="bg-gradient-to-r from-blue-600 to-blue-400 p-8 rounded-3xl text-white mb-4"
         >
-          <div className="text-sm mb-6">
+          <div className="text-2xl mb-6 font-extrabold">
             {report.startDate} - {report.endDate}
           </div>
 
-          <div className="space-y-6">
+          {/* <div className="space-y-6">
             {reportSections.map((section) => (
               parsedReport[section] && (
                 <div key={section}>
@@ -180,7 +181,14 @@ export default function MyHealth() {
                 </div>
               )
             ))}
-          </div>
+          </div> */}
+
+<div className="text-xl font-semibold">
+  {report.report.split("\\n").map((paragraph, index) => (
+    <p key={index} className='mt-6'>{paragraph}</p>
+	// empty line
+  ))}
+</div>
         </div>
       );
     }) : (
